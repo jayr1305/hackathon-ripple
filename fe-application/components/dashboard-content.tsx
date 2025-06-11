@@ -38,6 +38,46 @@ const customStyles = `
   .bg-gradient-radial {
     background: radial-gradient(circle, var(--tw-gradient-stops));
   }
+
+@keyframes gentle-bounce {
+  0%, 20%, 50%, 80%, 100% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(-8px);
+  }
+  60% {
+    transform: translateY(-4px);
+  }
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    opacity: 0.6;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+}
+
+@keyframes arrow-point {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  50% {
+    transform: translateX(4px);
+  }
+}
+
+.animate-gentle-bounce {
+  animation: gentle-bounce 2s ease-in-out infinite;
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
 `
 
 export function DashboardContent({
@@ -48,7 +88,7 @@ export function DashboardContent({
   onBlockSelect,
 }: DashboardContentProps) {
   const [isChatOpen, setIsChatOpen] = useState(false)
-  const datasetTitle = selectedDataset === "hypertension" ? "Hypertension Management" : "Low Birth Weight Prevention"
+  const datasetTitle = selectedDataset === "hypertension" ? "Health Indicators" : "Education Indicators"
   const currentData = selectedDataset === "hypertension" ? hypertensionData : lowBirthWeightData
   const filteredData = currentData
 
@@ -65,6 +105,9 @@ export function DashboardContent({
     <>
       <AIBuddyOverlay isOpen={isOverlayOpen} onClose={() => setIsOverlayOpen(false)} />
       <style dangerouslySetInnerHTML={{ __html: customStyles }} />
+      <div className="flex-1 space-y-6 p-6">        
+        <h1 className="text-3xl font-bold tracking-tight">Monitoring Of Aspirational Blocks DashBoard Uttar Pradesh</h1>
+      </div>
       <div className="flex-1 space-y-6 p-6">
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -74,6 +117,24 @@ export function DashboardContent({
           </div>
           <div className="flex items-center gap-4">
             <div className="relative">
+              {/* Jumping "Start Now" text */}
+              <div className="absolute -top-12 -left-8 z-20">
+                <div className="animate-gentle-bounce">
+                  <div className="bg-gradient-to-r from-orange-500 to-red-500 text-white px-3 py-1.5 rounded-full text-sm font-medium shadow-lg animate-pulse-glow">
+                    <span className="flex items-center gap-1">
+                      Start Now
+                    </span>
+                  </div>
+                  {/* Pointer arrow pointing down to button */}
+                  <div className="flex justify-center mt-1">
+                    <div
+                      className="w-0 h-0 border-l-4 border-r-4 border-t-4 border-l-transparent border-r-transparent border-t-orange-500 animate-gentle-bounce"
+                      style={{ animationDelay: "0.2s" }}
+                    ></div>
+                  </div>
+                </div>
+              </div>
+
               <Button
                 variant="outline"
                 className="relative w-64 justify-start text-muted-foreground overflow-hidden border-blue-200/50 bg-background/80 backdrop-blur-sm hover:bg-blue-50/50 hover:border-blue-300/70 transition-all duration-300 group"
@@ -87,10 +148,10 @@ export function DashboardContent({
                 }}
                 style={{
                   boxShadow: `
-        0 0 20px rgba(196, 38, 3, 0.16),
-        0 0 40px rgba(182, 23, 23, 0.9),
-        inset 0 1px 0 rgba(255, 255, 255, 0.1)
-      `,
+          0 0 20px rgba(196, 38, 3, 0.16),
+          0 0 40px rgba(182, 23, 23, 0.9),
+          inset 0 1px 0 rgba(255, 255, 255, 0.1)
+        `,
                 }}
               >
                 {/* Base rotating glow */}
@@ -113,7 +174,7 @@ export function DashboardContent({
                 <div className="relative z-10 flex items-center">
                   <Bot className="mr-2 h-4 w-4 text-blue-500" />
                   <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent font-medium">
-                    Ask Data Dost...
+                    Ask InsightPro...
                   </span>
                 </div>
 
