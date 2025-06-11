@@ -51,12 +51,12 @@ const generalItems = [
 
 const healthItems = [
   {
-    title: "Hypertension",
+    title: "Health",
     key: "hypertension" as const,
     icon: Heart,
   },
   {
-    title: "Low Birth Weight",
+    title: "Education",
     key: "low_birth_weight" as const,
     icon: Baby,
   },
