@@ -55,7 +55,7 @@ export function DashboardContent({
             onClick={() => setIsChatOpen(true)}
           >
             <Bot className="mr-2 h-4 w-4" />
-            Ask me anything...
+            Ask AI Assistant...
           </Button>
           <Badge variant="outline" className="gap-1">
             <Calendar className="h-3 w-3" />
@@ -248,14 +248,9 @@ export function DashboardContent({
           </div>
         </CardContent>
       </Card>
-      {/* Chat Panel */}
-      <ResizableChatPanel
-        open={isChatOpen}
-        onOpenChange={setIsChatOpen}
-        hypertensionData={hypertensionData}
-        lowBirthWeightData={lowBirthWeightData}
-        selectedDataset={selectedDataset}
-      />
+
+      {/* Independent AI Chat Panel */}
+      <ResizableChatPanel open={isChatOpen} onOpenChange={setIsChatOpen} />
     </div>
   )
 }

@@ -1,43 +1,39 @@
 "use client"
 
 import React from "react"
-import { useState, useCallback } from "react"
+import { useState, useCallback, useRef, useEffect } from "react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Send, Bot, Loader2, GripVertical, X } from "lucide-react"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Send, Bot, Loader2, GripVertical, X, Trash2, Copy, Check } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { LLM_MODEL_API } from "@/env"
+import { getChatResponseFromModel } from "@/helper"
 
 interface ChatMessage {
+  id: string
   role: "user" | "assistant"
   content: string
   timestamp: Date
+  error?: boolean
 }
 
 interface ResizableChatPanelProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  hypertensionData: any[]
-  lowBirthWeightData: any[]
-  selectedDataset: "hypertension" | "low_birth_weight"
 }
 
 const MIN_WIDTH = 400
-const MAX_WIDTH = 800
+const MAX_WIDTH = 900
 const DEFAULT_WIDTH = 540
 
-export function ResizableChatPanel({
-  open,
-  onOpenChange,
-  hypertensionData,
-  lowBirthWeightData,
-  selectedDataset,
-}: ResizableChatPanelProps) {
+export function ResizableChatPanel({ open, onOpenChange }: ResizableChatPanelProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
+      id: "welcome",
       role: "assistant",
       content:
-        "Hello! I'm your healthcare data assistant. Ask me anything about your hypertension and low birth weight data. Try asking about top performers, averages, or comparisons between years.",
+        "Hello! I'm your AI assistant powered by Llama 3.2. Ask me anything - I can help with questions, explanations, coding, creative writing, analysis, and much more!",
       timestamp: new Date(),
     },
   ])
@@ -45,6 +41,23 @@ export function ResizableChatPanel({
   const [isLoading, setIsLoading] = useState(false)
   const [panelWidth, setPanelWidth] = useState(DEFAULT_WIDTH)
   const [isResizing, setIsResizing] = useState(false)
+  const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null)
+  const messagesEndRef = useRef<HTMLDivElement>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
+  }
+
+  useEffect(() => {
+    scrollToBottom()
+  }, [messages])
+
+  useEffect(() => {
+    if (open && inputRef.current) {
+      inputRef.current.focus()
+    }
+  }, [open])
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     setIsResizing(true)
@@ -83,43 +96,90 @@ export function ResizableChatPanel({
     }
   }, [isResizing, handleMouseMove, handleMouseUp])
 
+  const generateMessageId = () => {
+    return Date.now().toString() + Math.random().toString(36).substr(2, 9)
+  }
+
   const handleSend = async () => {
-    if (!input.trim()) return
+    if (!input.trim() || isLoading) return
 
     const userMessage: ChatMessage = {
+      id: generateMessageId(),
       role: "user",
-      content: input,
+      content: input.trim(),
       timestamp: new Date(),
     }
 
     setMessages((prev) => [...prev, userMessage])
+    const currentInput = input.trim()
     setInput("")
     setIsLoading(true)
 
     try {
-      const response = await mockChatAPI(input, selectedDataset, hypertensionData, lowBirthWeightData)
+      const data = await getChatResponseFromModel(currentInput);
 
-      setMessages((prev) => [
-        ...prev,
-        {
-          role: "assistant",
-          content: response,
-          timestamp: new Date(),
-        },
-      ])
+      console.log(data)
+
+      const assistantMessage: ChatMessage = {
+        id: generateMessageId(),
+        role: "assistant",
+        content: data.response || "I apologize, but I couldn't generate a response. Please try again.",
+        timestamp: new Date(),
+        error: !data?.done,
+      }
+
+      setMessages((prev) => [...prev, assistantMessage])
     } catch (error) {
-      setMessages((prev) => [
-        ...prev,
-        {
-          role: "assistant",
-          content: "Sorry, I encountered an error processing your request. Please try again.",
-          timestamp: new Date(),
-        },
-      ])
+      console.error("Chat error:", error)
+      const errorMessage: ChatMessage = {
+        id: generateMessageId(),
+        role: "assistant",
+        content: "❌ Network error: Unable to connect to the AI service. Please check your connection and try again.",
+        timestamp: new Date(),
+        error: true,
+      }
+      setMessages((prev) => [...prev, errorMessage])
     } finally {
       setIsLoading(false)
     }
   }
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault()
+      handleSend()
+    }
+  }
+
+  const clearChat = () => {
+    setMessages([
+      {
+        id: "welcome",
+        role: "assistant",
+        content: "Chat cleared! I'm ready to help you with anything you'd like to know.",
+        timestamp: new Date(),
+      },
+    ])
+  }
+
+  const copyMessage = async (messageId: string, content: string) => {
+    try {
+      await navigator.clipboard.writeText(content)
+      setCopiedMessageId(messageId)
+      setTimeout(() => setCopiedMessageId(null), 2000)
+    } catch (error) {
+      console.error("Failed to copy message:", error)
+    }
+  }
+
+  const suggestedQuestions = [
+    "Explain quantum computing in simple terms",
+    "Write a Python function to sort a list",
+    "What are the benefits of renewable energy?",
+    "Help me brainstorm ideas for a project",
+    "Explain the difference between AI and ML",
+    "Write a creative short story",
+  ]
 
   if (!open) return null
 
@@ -150,9 +210,15 @@ export function ResizableChatPanel({
         <div className="p-4 border-b ml-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Bot className="h-5 w-5 text-primary" />
-            <h2 className="font-semibold">Healthcare Data Assistant</h2>
+            <div>
+              <h2 className="font-semibold">AI Assistant</h2>
+              <p className="text-xs text-muted-foreground">Powered by Llama 3.2</p>
+            </div>
           </div>
           <div className="flex items-center gap-2">
+            <Button variant="ghost" size="sm" onClick={clearChat} title="Clear chat">
+              <Trash2 className="h-4 w-4" />
+            </Button>
             <span className="text-xs text-muted-foreground">{panelWidth}px</span>
             <Button variant="ghost" size="icon" onClick={() => onOpenChange(false)}>
               <X className="h-4 w-4" />
@@ -162,55 +228,75 @@ export function ResizableChatPanel({
 
         {/* Messages */}
         <div className="flex-1 overflow-y-auto p-4 ml-4 space-y-4">
-          {messages.map((message, index) => (
+          {messages.map((message) => (
             <div
-              key={index}
-              className={cn(
-                "flex items-start gap-3 max-w-[85%]",
-                message.role === "user" ? "ml-auto flex-row-reverse" : "",
-              )}
+              key={message.id}
+              className={cn("flex items-start gap-3 group", message.role === "user" ? "flex-row-reverse" : "")}
             >
               <Avatar className="h-8 w-8 flex-shrink-0">
-                {message.role === "assistant" ? <AvatarImage src="/placeholder.svg?height=32&width=32" /> : null}
                 <AvatarFallback
-                  className={message.role === "assistant" ? "bg-primary text-primary-foreground" : "bg-muted"}
+                  className={cn(
+                    "text-xs",
+                    message.role === "assistant"
+                      ? message.error
+                        ? "bg-red-100 text-red-600"
+                        : "bg-primary text-primary-foreground"
+                      : "bg-muted",
+                  )}
                 >
-                  {message.role === "assistant" ? "AI" : "U"}
+                  {message.role === "assistant" ? (message.error ? "!" : "AI") : "U"}
                 </AvatarFallback>
               </Avatar>
               <div
                 className={cn(
-                  "rounded-lg p-3 break-words",
-                  message.role === "assistant" ? "bg-muted text-foreground" : "bg-primary text-primary-foreground",
+                  "rounded-lg p-3 break-words max-w-[80%] relative",
+                  message.role === "assistant"
+                    ? message.error
+                      ? "bg-red-50 text-red-900 border border-red-200"
+                      : "bg-muted text-foreground"
+                    : "bg-primary text-primary-foreground",
                 )}
               >
-                <p className="text-sm leading-relaxed whitespace-pre-line">{message.content}</p>
-                <p className="text-xs opacity-70 mt-1">
-                  {message.timestamp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                </p>
+                <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.content}</p>
+                <div className="flex items-center justify-between mt-2">
+                  <p className="text-xs opacity-70">
+                    {message.timestamp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                  </p>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="opacity-0 group-hover:opacity-100 transition-opacity h-6 w-6 p-0"
+                    onClick={() => copyMessage(message.id, message.content)}
+                    title="Copy message"
+                  >
+                    {copiedMessageId === message.id ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+                  </Button>
+                </div>
               </div>
             </div>
           ))}
           {isLoading && (
-            <div className="flex items-start gap-3 max-w-[85%]">
+            <div className="flex items-start gap-3">
               <Avatar className="h-8 w-8">
                 <AvatarFallback className="bg-primary text-primary-foreground">AI</AvatarFallback>
               </Avatar>
               <div className="rounded-lg p-3 bg-muted">
                 <div className="flex items-center gap-2">
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  <p className="text-sm">Analyzing your data...</p>
+                  <p className="text-sm">AI is thinking...</p>
                 </div>
               </div>
             </div>
           )}
+          <div ref={messagesEndRef} />
         </div>
 
         {/* Quick Suggestions */}
-        <div className="px-4 ml-4 pb-2">
-          <div className="flex flex-wrap gap-2">
-            {["Show top performers", "Compare years", "District averages", "Worst performing blocks"].map(
-              (suggestion) => (
+        {messages.length <= 1 && (
+          <div className="px-4 ml-4 pb-2">
+            <p className="text-xs text-muted-foreground mb-2">Try asking:</p>
+            <div className="flex flex-wrap gap-2">
+              {suggestedQuestions.slice(0, 3).map((suggestion) => (
                 <Button
                   key={suggestion}
                   variant="outline"
@@ -221,10 +307,10 @@ export function ResizableChatPanel({
                 >
                   {suggestion}
                 </Button>
-              ),
-            )}
+              ))}
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Input */}
         <div className="p-4 border-t ml-4">
@@ -233,127 +319,29 @@ export function ResizableChatPanel({
               e.preventDefault()
               handleSend()
             }}
-            className="flex items-center gap-2"
+            className="flex items-end gap-2"
           >
-            <Input
-              placeholder="Ask about your healthcare data..."
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              className="flex-1"
-              disabled={isLoading}
-            />
+            <div className="flex-1">
+              <Input
+                ref={inputRef}
+                placeholder="Ask me anything..."
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyPress={handleKeyPress}
+                disabled={isLoading}
+                className="resize-none"
+              />
+            </div>
             <Button type="submit" size="icon" disabled={isLoading || !input.trim()}>
               <Send className="h-4 w-4" />
               <span className="sr-only">Send</span>
             </Button>
           </form>
           <p className="text-xs text-muted-foreground mt-2">
-            Drag the left edge to resize • Min: {MIN_WIDTH}px • Max: {MAX_WIDTH}px
+            Press Enter to send • Shift+Enter for new line • Drag left edge to resize
           </p>
         </div>
       </div>
     </>
   )
-}
-
-// Enhanced mock API function with more detailed responses
-async function mockChatAPI(
-  query: string,
-  selectedDataset: string,
-  hypertensionData: any[],
-  lowBirthWeightData: any[],
-): Promise<string> {
-  // Simulate API delay
-  await new Promise((resolve) => setTimeout(resolve, 1000 + Math.random() * 1000))
-
-  const currentData = selectedDataset === "hypertension" ? hypertensionData : lowBirthWeightData
-  const datasetName = selectedDataset === "hypertension" ? "hypertension management" : "low birth weight prevention"
-
-  // Simple keyword-based responses
-  const lowerQuery = query.toLowerCase()
-
-  if (lowerQuery.includes("top") || lowerQuery.includes("best") || lowerQuery.includes("highest")) {
-    const topBlock = [...currentData].sort((a, b) => b["Achievement (Mar, 25) "] - a["Achievement (Mar, 25) "])[0]
-    const improvement = topBlock["Achievement (Mar, 25) "] - topBlock["Achievement (Mar, 24) "]
-
-    return `🏆 Top Performer: ${topBlock.Blocks} in ${topBlock.District} district leads with ${topBlock["Achievement (Mar, 25) "].toFixed(1)}% achievement in March 2025.
-
-📈 Improvement: ${improvement > 0 ? `+${improvement.toFixed(1)}%` : `${improvement.toFixed(1)}%`} from March 2024
-🎯 Rank: #${topBlock["Absolute Rank (Mar, 25) "]} (was #${topBlock["Absolute Rank (Mar, 24) "]} in 2024)
-📊 Score: ${topBlock["Absolute Score (Mar, 25) "]}% absolute score`
-  }
-
-  if (lowerQuery.includes("worst") || lowerQuery.includes("lowest") || lowerQuery.includes("bottom")) {
-    const worstBlock = [...currentData].sort((a, b) => a["Achievement (Mar, 25) "] - b["Achievement (Mar, 25) "])[0]
-    const change = worstBlock["Achievement (Mar, 25) "] - worstBlock["Achievement (Mar, 24) "]
-
-    return `⚠️ Needs Attention: ${worstBlock.Blocks} in ${worstBlock.District} district has the lowest achievement at ${worstBlock["Achievement (Mar, 25) "].toFixed(1)}% in March 2025.
-
-📉 Change: ${change >= 0 ? `+${change.toFixed(1)}%` : `${change.toFixed(1)}%`} from March 2024
-📍 Current Rank: #${worstBlock["Absolute Rank (Mar, 25) "]}
-💡 Recommendation: This block may need additional support and resources.`
-  }
-
-  if (lowerQuery.includes("average") || lowerQuery.includes("mean")) {
-    const avg2025 = currentData.reduce((sum, item) => sum + item["Achievement (Mar, 25) "], 0) / currentData.length
-    const avg2024 = currentData.reduce((sum, item) => sum + item["Achievement (Mar, 24) "], 0) / currentData.length
-    const overallChange = avg2025 - avg2024
-
-    return `📊 Average Performance for ${datasetName}:
-
-🎯 March 2025: ${avg2025.toFixed(1)}%
-📅 March 2024: ${avg2024.toFixed(1)}%
-📈 Overall Change: ${overallChange >= 0 ? `+${overallChange.toFixed(1)}%` : `${overallChange.toFixed(1)}%`}
-
-${overallChange >= 0 ? "✅ Positive trend across the region!" : "⚠️ Declining trend - intervention may be needed."}`
-  }
-
-  if (lowerQuery.includes("compare") || lowerQuery.includes("difference") || lowerQuery.includes("year")) {
-    const improvements = currentData.filter((item) => item["Change "] > 0).length
-    const declines = currentData.filter((item) => item["Change "] < 0).length
-    const stable = currentData.length - improvements - declines
-
-    return `📊 Year-over-Year Comparison (Mar 2024 vs Mar 2025):
-
-📈 Improved: ${improvements} blocks (${((improvements / currentData.length) * 100).toFixed(1)}%)
-📉 Declined: ${declines} blocks (${((declines / currentData.length) * 100).toFixed(1)}%)
-➡️ Stable: ${stable} blocks (${((stable / currentData.length) * 100).toFixed(1)}%)
-
-🎯 Key Insight: ${improvements > declines ? "More blocks are improving than declining - positive overall trend!" : "More attention needed as declines outweigh improvements."}`
-  }
-
-  if (lowerQuery.includes("district")) {
-    const districts = Array.from(new Set(currentData.map((item) => item.District)))
-    const districtPerformance = districts
-      .map((district) => {
-        const districtBlocks = currentData.filter((item) => item.District === district)
-        const avgPerformance =
-          districtBlocks.reduce((sum, item) => sum + item["Achievement (Mar, 25) "], 0) / districtBlocks.length
-        return { district, avgPerformance, blockCount: districtBlocks.length }
-      })
-      .sort((a, b) => b.avgPerformance - a.avgPerformance)
-
-    return `🗺️ District Performance Overview:
-
-${districtPerformance
-  .map((d, i) => `${i + 1}. ${d.district}: ${d.avgPerformance.toFixed(1)}% avg (${d.blockCount} blocks)`)
-  .join("\n")}
-
-🏆 Best District: ${districtPerformance[0].district}
-📍 Total Districts: ${districts.length}`
-  }
-
-  // Default response with helpful suggestions
-  return `🤖 I'm analyzing the ${datasetName} data for you. Here are some questions you can ask:
-
-💡 Try asking about:
-• "Show me the top performing blocks"
-• "What's the average achievement?"
-• "Compare performance between years"
-• "Which districts are doing best?"
-• "Show me the worst performing areas"
-
-📊 Current Dataset: ${currentData.length} blocks across ${Array.from(new Set(currentData.map((item) => item.District))).length} districts
-
-What would you like to know?`
 }
