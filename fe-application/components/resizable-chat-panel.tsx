@@ -7,8 +7,8 @@ import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Send, Bot, Loader2, GripVertical, X, Trash2, Copy, Check } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { LLM_MODEL_API } from "@/env"
 import { getChatResponseFromModel } from "@/helper"
+import Dictaphone from "./Dictaphone"
 
 interface ChatMessage {
   id: string
@@ -33,7 +33,7 @@ export function ResizableChatPanel({ open, onOpenChange }: ResizableChatPanelPro
       id: "welcome",
       role: "assistant",
       content:
-        "Hello! I'm your AI assistant powered by Llama 3.2. Ask me anything - I can help with questions, explanations, coding, creative writing, analysis, and much more!",
+        "Hello! I'm your AI assistant powered by Llama 3.2. Ask me anything - I can help with questions, explanations, coding, creative writing, analysis, and much more! You can also use the microphone button to speak your questions.",
       timestamp: new Date(),
     },
   ])
@@ -156,7 +156,8 @@ export function ResizableChatPanel({ open, onOpenChange }: ResizableChatPanelPro
       {
         id: "welcome",
         role: "assistant",
-        content: "Chat cleared! I'm ready to help you with anything you'd like to know.",
+        content:
+          "Chat cleared! I'm ready to help you with anything you'd like to know. You can type or use voice input!",
         timestamp: new Date(),
       },
     ])
@@ -170,6 +171,14 @@ export function ResizableChatPanel({ open, onOpenChange }: ResizableChatPanelPro
     } catch (error) {
       console.error("Failed to copy message:", error)
     }
+  }
+
+  const handleSpeechTranscript = (transcript: string) => {
+    setInput(transcript)
+    // Auto-focus the input after speech recognition
+    setTimeout(() => {
+      inputRef.current?.focus()
+    }, 100)
   }
 
   const suggestedQuestions = [
@@ -212,7 +221,7 @@ export function ResizableChatPanel({ open, onOpenChange }: ResizableChatPanelPro
             <Bot className="h-5 w-5 text-primary" />
             <div>
               <h2 className="font-semibold">AI Assistant</h2>
-              <p className="text-xs text-muted-foreground">Powered by Llama 3.2</p>
+              <p className="text-xs text-muted-foreground">Powered by Llama 3.2 • Voice & Text</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -294,7 +303,7 @@ export function ResizableChatPanel({ open, onOpenChange }: ResizableChatPanelPro
         {/* Quick Suggestions */}
         {messages.length <= 1 && (
           <div className="px-4 ml-4 pb-2">
-            <p className="text-xs text-muted-foreground mb-2">Try asking:</p>
+            <p className="text-xs text-muted-foreground mb-2">Try asking or speaking:</p>
             <div className="flex flex-wrap gap-2">
               {suggestedQuestions.slice(0, 3).map((suggestion) => (
                 <Button
@@ -324,7 +333,7 @@ export function ResizableChatPanel({ open, onOpenChange }: ResizableChatPanelPro
             <div className="flex-1">
               <Input
                 ref={inputRef}
-                placeholder="Ask me anything..."
+                placeholder="Ask me anything or use voice..."
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyPress={handleKeyPress}
@@ -332,13 +341,14 @@ export function ResizableChatPanel({ open, onOpenChange }: ResizableChatPanelPro
                 className="resize-none"
               />
             </div>
+            <Dictaphone onTranscript={handleSpeechTranscript} disabled={isLoading} />
             <Button type="submit" size="icon" disabled={isLoading || !input.trim()}>
               <Send className="h-4 w-4" />
               <span className="sr-only">Send</span>
             </Button>
           </form>
           <p className="text-xs text-muted-foreground mt-2">
-            Press Enter to send • Shift+Enter for new line • Drag left edge to resize
+            Press Enter to send • Shift+Enter for new line • Click mic to speak • Drag left edge to resize
           </p>
         </div>
       </div>
