@@ -9,6 +9,7 @@ import { Send, Bot, Loader2, GripVertical, X, Trash2, Copy, Check } from "lucide
 import { cn } from "@/lib/utils"
 import { getChatResponseFromModel, getChatResponseFromModelOLLAMA } from "@/helper"
 import Dictaphone from "./dictaphone"
+import Markdown from 'react-markdown'
 
 interface ChatMessage {
   id: string
@@ -182,7 +183,6 @@ export function ResizableChatPanel({ open, onOpenChange }: ResizableChatPanelPro
   }
 
   const suggestedQuestions = [
-    "Is there a correlation between Anganwadi Centres with functional toilets (1.13) and lower rates of Moderate Acute Malnutrition (MAM, 1.12)?",
     "Which blocks have high rates of SAM/MAM and also low mathematics/language scores in class 3 and 5?",
     "Are operational Anganwadi Centres with functional toilets and drinking water facilities associated with lower rates of SAM or MAM?",
     "Are there blocks where immunization coverage is low and foundational learning outcomes in class 3 are also poor?",
@@ -264,7 +264,7 @@ export function ResizableChatPanel({ open, onOpenChange }: ResizableChatPanelPro
                     : "bg-primary text-primary-foreground",
                 )}
               >
-                <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.content}</p>
+                <Markdown>{message.content}</Markdown>
                 <div className="flex items-center justify-between mt-2">
                   <p className="text-xs opacity-70">
                     {message.timestamp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
