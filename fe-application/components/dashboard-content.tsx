@@ -14,6 +14,7 @@ import { ResizableChatPanel } from "@/components/resizable-chat-panel"
 import { AIBuddyOverlay } from "./ai-buddy-overlay"
 
 interface DashboardContentProps {
+  healthRelatedData: {}
   hypertensionData: any[]
   lowBirthWeightData: any[]
   selectedDataset: "hypertension" | "low_birth_weight"
@@ -81,6 +82,7 @@ const customStyles = `
 `
 
 export function DashboardContent({
+  healthRelatedData,
   hypertensionData,
   lowBirthWeightData,
   selectedDataset,
