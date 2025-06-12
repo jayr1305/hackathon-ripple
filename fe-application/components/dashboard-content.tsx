@@ -381,8 +381,8 @@ export function DashboardContent({
         </Card>
 
         {/* Independent AI Chat Panel */}
-        <ResizableChatPanel open={isChatOpen} onOpenChange={setIsChatOpen} />
       </div>
+      <ResizableChatPanel open={isChatOpen} onOpenChange={setIsChatOpen} />
     </>
   )
 }

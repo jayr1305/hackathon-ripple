@@ -1,6 +1,22 @@
-import { LLM_MODEL_API, LLM_MODEL_NAME } from "./env"
+import { LLM_MODEL_API, LLM_MODEL_NAME, LLM_AGENT } from "./env"
 
 export const getChatResponseFromModel = async (message: string) => {
+    const response = await fetch(LLM_AGENT, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          query: message,
+        }),
+      })
+
+      const data = await response.json();
+      console.log(data);
+      return { ...data, response: data.answer, done: true };
+}
+
+export const getChatResponseFromModelOLLAMA = async (message: string) => {
     const response = await fetch(LLM_MODEL_API, {
         method: "POST",
         headers: {
@@ -18,5 +34,7 @@ export const getChatResponseFromModel = async (message: string) => {
         }),
       })
 
-      return await response.json()
+      const data = await response.json()
+      console.log(data);
+      return data;
 }

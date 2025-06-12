@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Send, Bot, Loader2, GripVertical, X, Trash2, Copy, Check } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { getChatResponseFromModel } from "@/helper"
+import { getChatResponseFromModel, getChatResponseFromModelOLLAMA } from "@/helper"
 import Dictaphone from "./dictaphone"
 
 interface ChatMessage {
@@ -25,7 +25,7 @@ interface ResizableChatPanelProps {
 
 const MIN_WIDTH = 400
 const MAX_WIDTH = 900
-const DEFAULT_WIDTH = 540
+const DEFAULT_WIDTH = 850
 
 export function ResizableChatPanel({ open, onOpenChange }: ResizableChatPanelProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([
@@ -33,7 +33,7 @@ export function ResizableChatPanel({ open, onOpenChange }: ResizableChatPanelPro
       id: "welcome",
       role: "assistant",
       content:
-        "Hello! I'm your AI assistant powered by Llama 3.2. Ask me anything - I can help with questions, explanations, coding, creative writing, analysis, and much more! You can also use the microphone button to speak your questions.",
+        "Hello! I'm your AI assistant powered by ML Agent. Ask me anything of your data - I can help with questions, explanations, analysis, and much more! You can also use the microphone button to speak your questions.",
       timestamp: new Date(),
     },
   ])
@@ -182,12 +182,10 @@ export function ResizableChatPanel({ open, onOpenChange }: ResizableChatPanelPro
   }
 
   const suggestedQuestions = [
-    "Explain quantum computing in simple terms",
-    "Write a Python function to sort a list",
-    "What are the benefits of renewable energy?",
-    "Help me brainstorm ideas for a project",
-    "Explain the difference between AI and ML",
-    "Write a creative short story",
+    "Is there a correlation between Anganwadi Centres with functional toilets (1.13) and lower rates of Moderate Acute Malnutrition (MAM, 1.12)?",
+    "Which blocks have high rates of SAM/MAM and also low mathematics/language scores in class 3 and 5?",
+    "Are operational Anganwadi Centres with functional toilets and drinking water facilities associated with lower rates of SAM or MAM?",
+    "Are there blocks where immunization coverage is low and foundational learning outcomes in class 3 are also poor?",
   ]
 
   if (!open) return null
@@ -220,15 +218,15 @@ export function ResizableChatPanel({ open, onOpenChange }: ResizableChatPanelPro
           <div className="flex items-center gap-2">
             <Bot className="h-5 w-5 text-primary" />
             <div>
-              <h2 className="font-semibold">AI Assistant</h2>
-              <p className="text-xs text-muted-foreground">Powered by Llama 3.2 • Voice & Text</p>
+              <h2 className="font-semibold">InsightPro - AI Assistant</h2>
+              <p className="text-xs text-muted-foreground">Powered by ML Agent • Voice & Text</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
             <Button variant="ghost" size="sm" onClick={clearChat} title="Clear chat">
               <Trash2 className="h-4 w-4" />
             </Button>
-            <span className="text-xs text-muted-foreground">{panelWidth}px</span>
+            {/* <span className="text-xs text-muted-foreground">{panelWidth}px</span> */}
             <Button variant="ghost" size="icon" onClick={() => onOpenChange(false)}>
               <X className="h-4 w-4" />
             </Button>
@@ -301,7 +299,7 @@ export function ResizableChatPanel({ open, onOpenChange }: ResizableChatPanelPro
         </div>
 
         {/* Quick Suggestions */}
-        {messages.length <= 1 && (
+        {messages.length <= 3 && (
           <div className="px-4 ml-4 pb-2">
             <p className="text-xs text-muted-foreground mb-2">Try asking or speaking:</p>
             <div className="flex flex-wrap gap-2">
