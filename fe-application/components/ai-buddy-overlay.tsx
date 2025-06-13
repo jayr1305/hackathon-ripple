@@ -313,7 +313,7 @@ export function AIBuddyOverlay({ isOpen, onClose }: AIBuddyOverlayProps) {
                 /* Welcome Step */
                 <div className="p-8 text-center relative z-10">
                   <div className="mb-6">
-                    <h2 className="text-3xl font-bold text-white">You Are Not Ready For</h2>
+                    <h2 className="text-3xl font-bold text-white">Hidden Potential Of Data</h2>
                     <h2 className="text-3xl font-bold text-white">
                       InsightPro
                     </h2>
